@@ -19,6 +19,7 @@
 
 .logo-area img {
   height: 40px;
+  cursor: pointer;
 }
 
 .logo-area h1 {
@@ -56,6 +57,51 @@
 .card p {
   font-size: 22px;
   font-weight: bold;
+}
+
+.animated-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+
+.animated-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.animated-card::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -35%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at top right, #FF0073, transparent 50%);
+  transform: rotate(5deg);
+  transition: opacity 0.3s ease;
+  opacity: 0;
+}
+
+.tema-escuro .animated-card::before {
+  background: radial-gradient(circle at top right, #FFCB05, transparent 50%);
+}
+
+.animated-card:hover::before {
+  opacity: 1;
+}
+
+.animated-card h3 {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.animated-card p {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 8px;
 }
 
 .filtro {
@@ -100,48 +146,4 @@ th, td {
 
 tbody tr:hover {
   background-color: rgba(0, 0, 0, 0.05);
-}
-
-.animated-card {
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
-  border-radius: 14px;
-  margin-bottom: 20px;
-}
-
-.animated-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-}
-
-.animated-card::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -35%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at top right, #FF0073, transparent 50%);
-  transform: rotate(5deg);
-  transition: opacity 0.3s ease;
-  opacity: 0;
-}
-
-.tema-escuro .animated-card::before {
-  background: radial-gradient(circle at top right, #FFCB05, transparent 50%);
-}
-
-.animated-card:hover::before {
-  opacity: 1;
-}
-
-.animated-card h3 {
-  font-size: 18px;
-  margin-bottom: 8px;
-}
-
-.animated-card p {
-  font-size: 18px;
-  font-weight: bold;
 }

@@ -95,9 +95,35 @@ export default function App() {
   );
 
   function exportarExcel() {
-    const ws = XLSX.utils.json_to_sheet(filtrados);
+    // 🔹 Limpa e reorganiza os dados
+    const dadosPlanilha = filtrados.map((p) => ({
+      Analista: p.analista,
+      Processo: p.processo,
+      "Total de Senhas": p.total_senhas,
+      Executadas: p.senhas_executadas,
+      "Não Identificadas": p.senhas_nao_identificadas,
+      Valor: Number(p.valor_processo).toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+      }),
+      "Data Execução": p.data_execucao_formatada,
+    }));
+
+    // 🔹 Linha em branco
+    dadosPlanilha.push({});
+
+    // 🔹 Totais
+    dadosPlanilha.push({
+      Analista: "TOTAL",
+      Processo: filtrados.length,
+      Valor: totalValores.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+      }),
+    });
+
+    const ws = XLSX.utils.json_to_sheet(dadosPlanilha);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Processos");
+
     XLSX.writeFile(wb, "processos_issec.xlsx");
   }
 
@@ -147,13 +173,13 @@ export default function App() {
 
         <div className="card animated-card"
           style={{ backgroundColor: cores[tema].card, color: cores[tema].texto }}>
-          <h3>Total de Processos</h3>
+          <h3>Total de Processos:</h3>
           <p>{filtrados.length}</p>
         </div>
 
         <div className="card animated-card"
           style={{ backgroundColor: cores[tema].card, color: cores[tema].texto }}>
-          <h3>Total em Valores</h3>
+          <h3>Total em Valores:</h3>
           <p>
             R$ {totalValores.toFixed(2)
               .replace(".", ",")
@@ -163,7 +189,7 @@ export default function App() {
 
         <div className="card animated-card"
           style={{ backgroundColor: cores[tema].card, color: cores[tema].texto }}>
-          <h3>Status das Senhas</h3>
+          <h3>Status das Senhas:</h3>
           <p>Cadastradas: {cadastradas} ({percCad}%)</p>
           <p>Não Cadastradas: {naoCad} ({percNao}%)</p>
           <p>Total: {totalSenhas}</p>
@@ -230,14 +256,18 @@ export default function App() {
                 <td style={{ color: cores[tema].texto }}>{p.total_senhas}</td>
                 <td style={{ color: cores[tema].texto }}>{p.senhas_executadas}</td>
                 <td style={{ color: cores[tema].texto }}>{p.senhas_nao_identificadas}</td>
-                <td style={{ color: cores[tema].texto }}>{p.valor_processo}</td>
+                <td style={{ color: cores[tema].texto }}>
+                  {Number(p.valor_processo).toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </td>
                 <td style={{ color: cores[tema].texto }}>{p.data_execucao_formatada}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
     </div>
   );
 }
