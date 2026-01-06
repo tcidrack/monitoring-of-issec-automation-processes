@@ -16,8 +16,10 @@ export default function App() {
   const [processos, setProcessos] = useState([]);
   const [analista, setAnalista] = useState("Todos");
   const [tema, setTema] = useState("claro");
-  const [mes, setMes] = useState("Todos");
   const [loading, setLoading] = useState(false);
+  const [producaoSelecionada, setProducaoSelecionada] = useState("Todos");
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim, setDataFim] = useState("");
 
   const cores = {
     claro: {
@@ -69,19 +71,28 @@ export default function App() {
     }
   }
 
-  const mesesLista = ["Todos", 1,2,3,4,5,6,7,8,9,10,11,12];
-
-  let filtrados = processos;
+  let filtrados = filtrarPorPeriodo(processos);
 
   if (analista !== "Todos") {
     filtrados = filtrados.filter(p => p.analista === analista);
   }
 
-  if (mes !== "Todos") {
-    filtrados = filtrados.filter(p => p.mes === mes);
+  if (producaoSelecionada !== "Todos") {
+    filtrados = filtrados.filter(
+      p => formatarMesAno(p.data_producao) === producaoSelecionada
+    );
   }
 
   const analistasUnicos = ["Todos", ...new Set(processos.map(p => p.analista))];
+
+  const producoesUnicas = [
+    "Todos",
+    ...new Set(
+      processos
+        .map(p => formatarMesAno(p.data_producao))
+        .filter(Boolean)
+    )
+  ];
 
   const totalSenhas = filtrados.reduce((acc,p)=>acc+(p.total_senhas||0),0);
   const cadastradas = filtrados.reduce((acc,p)=>acc+(p.senhas_executadas||0),0);
@@ -94,8 +105,27 @@ export default function App() {
     (acc,p)=>acc+(p.valor_processo||0),0
   );
 
+  function formatarMesAno(data) {
+    if (!data) return "";
+    const d = new Date(data);
+    return `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  }
+
+  function filtrarPorPeriodo(lista) {
+    if (!dataInicio || !dataFim) return lista;
+
+    const inicio = new Date(dataInicio);
+    const fim = new Date(dataFim);
+    fim.setHours(23, 59, 59, 999);
+
+    return lista.filter(p => {
+      if (!p.data_execucao) return false;
+      const data = new Date(p.data_execucao);
+      return data >= inicio && data <= fim;
+    });
+  }
+
   function exportarExcel() {
-    // 🔹 Limpa e reorganiza os dados
     const dadosPlanilha = filtrados.map((p) => ({
       Analista: p.analista,
       Processo: p.processo,
@@ -108,10 +138,8 @@ export default function App() {
       "Data Execução": p.data_execucao_formatada,
     }));
 
-    // 🔹 Linha em branco
     dadosPlanilha.push({});
 
-    // 🔹 Totais
     dadosPlanilha.push({
       Analista: "TOTAL",
       Processo: filtrados.length,
@@ -219,10 +247,40 @@ export default function App() {
           {analistasUnicos.map(a=> <option key={a}>{a}</option>)}
         </select>
 
-        <label>Mês:</label>
-        <select value={mes} onChange={(e)=>setMes(e.target.value==="Todos"?"Todos":Number(e.target.value))}>
-          {mesesLista.map(m=> <option key={m}>{m}</option>)}
+        <label>Produção:</label>
+        <select
+          value={producaoSelecionada}
+          onChange={(e) => setProducaoSelecionada(e.target.value)}
+        >
+          {producoesUnicas.map(p => (
+            <option key={p} value={p}>{p}</option>
+          ))}
         </select>
+
+        <label>Período:</label>
+        <input className="filtro-data"
+          type="date"
+          value={dataInicio}
+          onChange={(e) => setDataInicio(e.target.value)}
+        />
+
+        <span style={{ color: "#fff", fontWeight: "bold" }}> até </span>
+
+        <input className="filtro-data"
+          type="date"
+          value={dataFim}
+          onChange={(e) => setDataFim(e.target.value)}
+        />
+
+        <button
+          className="btn-tema"
+          onClick={() => {
+            setDataInicio("");
+            setDataFim("");
+          }}
+        >
+          Limpar período
+        </button>
 
         <button className="btn-tema" onClick={exportarExcel}>
           ⬇️ Exportar Excel
@@ -240,6 +298,7 @@ export default function App() {
             <tr>
               <th style={{ color: cores[tema].texto }}>Analista</th>
               <th style={{ color: cores[tema].texto }}>Processo</th>
+              <th style={{ color: cores[tema].texto }}>Mês de Produção</th>
               <th style={{ color: cores[tema].texto }}>Total Senhas</th>
               <th style={{ color: cores[tema].texto }}>Executadas</th>
               <th style={{ color: cores[tema].texto }}>Não Identificadas</th>
@@ -253,6 +312,7 @@ export default function App() {
               <tr key={i}>
                 <td style={{ color: cores[tema].texto }}>{p.analista}</td>
                 <td style={{ color: cores[tema].texto }}>{p.processo}</td>
+                <td style={{ color: cores[tema].texto }}>{formatarMesAno(p.data_producao)}</td>
                 <td style={{ color: cores[tema].texto }}>{p.total_senhas}</td>
                 <td style={{ color: cores[tema].texto }}>{p.senhas_executadas}</td>
                 <td style={{ color: cores[tema].texto }}>{p.senhas_nao_identificadas}</td>

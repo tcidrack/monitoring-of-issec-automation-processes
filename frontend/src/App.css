@@ -39,6 +39,7 @@
 
 .cards {
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
 }
 
@@ -107,6 +108,7 @@
 .filtro {
   margin-bottom: 20px;
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   align-items: center;
 }
@@ -120,6 +122,13 @@
   padding: 8px;
   border-radius: 6px;
   border: none;
+  margin-right: 15px;
+}
+
+.filtro-data{
+  padding: 8px;
+  border-radius: 6px;
+  border-style: none;
 }
 
 .tabela-container {
