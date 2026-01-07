@@ -87,11 +87,13 @@ export default function App() {
 
   const producoesUnicas = [
     "Todos",
-    ...new Set(
-      processos
-        .map(p => formatarMesAno(p.data_producao))
-        .filter(Boolean)
-    )
+    ...Array.from(
+      new Set(processos.map(p => formatarMesAno(p.data_producao)).filter(Boolean))
+    ).sort((a,b) => {
+      const [ma, ya] = a.split("/");
+      const [mb, yb] = b.split("/");
+      return new Date(`${ya}-${ma}-01`) - new Date(`${yb}-${mb}-01`);
+    })
   ];
 
   const totalSenhas = filtrados.reduce((acc,p)=>acc+(p.total_senhas||0),0);
@@ -107,8 +109,9 @@ export default function App() {
 
   function formatarMesAno(data) {
     if (!data) return "";
-    const d = new Date(data);
-    return `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+
+    const [ano, mes] = data.split("-");
+    return `${mes}/${ano}`;
   }
 
   function filtrarPorPeriodo(lista) {
@@ -155,15 +158,32 @@ export default function App() {
     XLSX.writeFile(wb, "processos_issec.xlsx");
   }
 
-  async function limparMesAtual() {
-    if (!window.confirm("⚠️ Deseja apagar TODOS os registros deste mês?")) return;
+  async function limparProcessos() {
+    if (!window.confirm("⚠️ Deseja apagar somente os processos filtrados na tela?")) return;
 
     try {
-      await fetch(`${API_URL}/limpar-mes`, { method: "DELETE" });
-      alert("Registros apagados com sucesso.");
+      const payload = {
+        analista: analista,
+        competencia: producaoSelecionada,
+        data_inicio: dataInicio || null,
+        data_fim: dataFim || null,
+      };
+
+      const response = await fetch(`${API_URL}/limpar-filtrados`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.detail || "Erro ao apagar");
+
+      alert(`🗑️ ${result.apagados} processos removidos.`);
       carregarDados();
     } catch (err) {
-      alert("Erro ao limpar registros.");
+      console.error(err);
+      alert("Erro ao apagar registros filtrados.");
     }
   }
 
@@ -234,7 +254,7 @@ export default function App() {
               <XAxis dataKey="nome" stroke={cores[tema].texto} />
               <YAxis stroke={cores[tema].texto} />
               <Tooltip />
-              <Bar dataKey="valor" fill="#FF0073" />
+              <Bar dataKey="valor" fill={tema === "escuro" ? "#FFCB05" : "#FF0073"}/>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -247,7 +267,7 @@ export default function App() {
           {analistasUnicos.map(a=> <option key={a}>{a}</option>)}
         </select>
 
-        <label>Produção:</label>
+        <label>Competência:</label>
         <select
           value={producaoSelecionada}
           onChange={(e) => setProducaoSelecionada(e.target.value)}
@@ -286,8 +306,8 @@ export default function App() {
           ⬇️ Exportar Excel
         </button>
 
-        <button className="btn-tema" onClick={limparMesAtual}>
-          🗑️ Limpar mês
+        <button className="btn-tema" onClick={limparProcessos}>
+          🗑️ Apagar Processos
         </button>
       </div>
 
@@ -298,7 +318,7 @@ export default function App() {
             <tr>
               <th style={{ color: cores[tema].texto }}>Analista</th>
               <th style={{ color: cores[tema].texto }}>Processo</th>
-              <th style={{ color: cores[tema].texto }}>Mês de Produção</th>
+              <th style={{ color: cores[tema].texto }}>Competência</th>
               <th style={{ color: cores[tema].texto }}>Total Senhas</th>
               <th style={{ color: cores[tema].texto }}>Executadas</th>
               <th style={{ color: cores[tema].texto }}>Não Identificadas</th>
